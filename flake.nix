@@ -18,7 +18,7 @@
   ####################################################################
   outputs = { self, nixpkgs, home-manager }:
   let
-    system = "aarch64-linux";
+    system = "x86_64-linux";
     pkgs   = import nixpkgs { inherit system; config.allowUnfree = true; };
   in
   {
@@ -33,7 +33,7 @@
     ##################################################################
     # 2 ▸ Home-Manager configuration for user “ubuntu”
     ##################################################################
-    homeConfigurations."ubuntu" =
+    homeConfigurations."azureuser" =
       home-manager.lib.homeManagerConfiguration {
         inherit pkgs;
         modules = [
@@ -52,8 +52,8 @@
 
           # 2b ▸ Core HM settings & packages
           {
-            home.username      = "ubuntu";
-            home.homeDirectory = "/home/ubuntu";
+            home.username      = "azureuser";
+            home.homeDirectory = "/home/azureuser";
             home.stateVersion  = "24.05";     # never auto-bump
 
             #### Shell ################################################
@@ -61,6 +61,13 @@
             programs.bash.initExtra = ''
               export OSH="$HOME/.oh-my-bash"
               [ -f "$OSH/oh-my-bash.sh" ] && source "$OSH/oh-my-bash.sh"
+
+	      # Linuxbrew shellenv
+  	      if [ -d "$HOME/.linuxbrew" ]; then
+    		eval "$($HOME/.linuxbrew/bin/brew shellenv)"
+              elif [ -d "/home/linuxbrew/.linuxbrew" ]; then
+    		eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+  	      fi
             '';
 
             #### Direnv ###############################################
