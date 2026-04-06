@@ -75,10 +75,10 @@
     clang-tools           # clangd (C/C++ LSP)
     zls                   # Zig LSP
     lua-language-server
-    nodePackages.bash-language-server
-    nodePackages.typescript-language-server
-    nodePackages.yaml-language-server
-    nodePackages.vscode-json-languageserver
+    bash-language-server
+    typescript-language-server
+    yaml-language-server
+    vscode-json-languageserver
 
     ## ── Containers & k8s ───────────────────────────────────────────
     lazydocker            # TUI for Docker
@@ -167,19 +167,10 @@
   ####################################################################
   programs.git = {
     enable    = true;
-    userName  = lib.mkDefault "Dr G";
-    userEmail = lib.mkDefault "drg@example.com";
 
-    delta = {
-      enable = true;
-      options = {
-        navigate     = true;
-        side-by-side = true;
-        line-numbers = true;
-      };
-    };
-
-    extraConfig = {
+    settings = {
+      user.name  = lib.mkDefault "Dr G";
+      user.email = lib.mkDefault "drg@example.com";
       init.defaultBranch = "main";
       pull.rebase        = true;
       push.autoSetupRemote = true;
@@ -189,6 +180,16 @@
     };
 
     lfs.enable = true;
+  };
+
+  programs.delta = {
+    enable = true;
+    enableGitIntegration = true;
+    options = {
+      navigate     = true;
+      side-by-side = true;
+      line-numbers = true;
+    };
   };
 
   ####################################################################

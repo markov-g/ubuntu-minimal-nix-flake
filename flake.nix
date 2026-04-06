@@ -51,11 +51,10 @@
         host = "default";
       };
 
-      # Add more users/hosts as needed:
-      # "devel" = mkHomeUser {
-      #   user = "devel";
-      #   host = "devbox";
-      # };
+      "devel" = mkHomeUser {
+        user = "devel";
+        host = "default";
+      };
     };
 
     ##################################################################
