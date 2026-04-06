@@ -1,0 +1,62 @@
+[Global plugin config]
+manageProfile=false
+
+[SSH Config][AWS-SMO-GmvDevBox]
+hostname=172.19.20.226
+identifier=AWS-SMO-GmvDevBox
+importedFromSshConfig=true
+port=
+profileName=Built-in
+sshkey="/Users/r1pp3r/Downloads/Joe_PTC.pem"
+useSshConfig=true
+username=devel
+
+[SSH Config][GMvAzureDevBox]
+hostname=172.31.2.4
+identifier=GMvAzureDevBox
+importedFromSshConfig=true
+port=
+profileName=Built-in
+sshkey="/Users/r1pp3r/.ssh/id_rsa"
+useSshConfig=true
+username=azureuser
+
+[SSH Config][code.siemens.com]
+hostname=code.siemens.com
+identifier=code.siemens.com
+importedFromSshConfig=true
+port=
+profileName=Built-in
+sshkey=
+useSshConfig=true
+username=git
+
+[SSH Config][github.com]
+hostname=github.com
+identifier=github.com
+importedFromSshConfig=true
+port=443
+profileName=
+sshkey=
+useSshConfig=true
+username=
+
+[SSH Config][minidevbox]
+hostname=ssh.r1pp3r.com
+identifier=minidevbox
+importedFromSshConfig=true
+port=
+profileName=
+sshkey=~/.ssh/minidevbox
+useSshConfig=true
+username=r1pp3r
+
+[SSH Config][multipass-devbox]
+hostname=192.168.2.2
+identifier=multipass-devbox
+importedFromSshConfig=true
+port=
+profileName=Built-in
+sshkey="/Users/r1pp3r/.ssh/id-rsa-multipass"
+useSshConfig=true
+username=ubuntu

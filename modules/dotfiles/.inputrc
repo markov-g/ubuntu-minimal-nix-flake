@@ -1,0 +1,25 @@
+# ── Readline configuration ─────────────────────────────────────────
+set editing-mode vi
+set show-mode-in-prompt on
+set vi-ins-mode-string \1\e[5 q\2
+set vi-cmd-mode-string \1\e[1 q\2
+
+# Case-insensitive completion
+set completion-ignore-case on
+set show-all-if-ambiguous on
+set show-all-if-unmodified on
+
+# Color completions by file type
+set colored-stats on
+set colored-completion-prefix on
+set visible-stats on
+
+# History search with arrow keys
+"\e[A": history-search-backward
+"\e[B": history-search-forward
+
+# Ctrl-l clears screen in both modes
+set keymap vi-command
+Control-l: clear-screen
+set keymap vi-insert
+Control-l: clear-screen

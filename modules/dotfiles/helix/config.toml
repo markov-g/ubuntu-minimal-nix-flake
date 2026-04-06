@@ -1,0 +1,57 @@
+## Helix editor — fast secondary editor for quick SSH edits
+## Catppuccin Mocha theme to match nvim + tmux
+
+theme = "catppuccin_mocha"
+
+[editor]
+line-number = "relative"
+mouse = true
+cursorline = true
+color-modes = true
+true-color = true
+rulers = [120]
+bufferline = "multiple"
+auto-format = true
+idle-timeout = 250
+
+[editor.cursor-shape]
+insert = "bar"
+normal = "block"
+select = "underline"
+
+[editor.file-picker]
+hidden = false
+
+[editor.indent-guides]
+render = true
+character = "│"
+skip-levels = 1
+
+[editor.lsp]
+display-messages = true
+display-inlay-hints = true
+
+[editor.statusline]
+left = ["mode", "spinner", "file-name", "file-modification-indicator"]
+center = []
+right = ["diagnostics", "selections", "register", "position", "file-encoding", "file-line-ending", "file-type"]
+separator = "│"
+
+[editor.whitespace.render]
+tab = "all"
+newline = "none"
+
+[editor.soft-wrap]
+enable = false
+
+[keys.normal]
+# Quick save
+"C-s" = ":w"
+# Buffer navigation
+"C-h" = "jump_view_left"
+"C-j" = "jump_view_down"
+"C-k" = "jump_view_up"
+"C-l" = "jump_view_right"
+
+[keys.insert]
+"j" = { "k" = "normal_mode" }

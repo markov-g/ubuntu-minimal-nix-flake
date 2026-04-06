@@ -1,0 +1,52 @@
+## Helix language server configuration
+## LSP servers are on PATH via Nix — no extra install needed
+
+[[language]]
+name = "nix"
+auto-format = true
+formatter = { command = "nixfmt" }
+
+[[language]]
+name = "go"
+auto-format = true
+
+[[language]]
+name = "rust"
+auto-format = true
+
+[[language]]
+name = "python"
+auto-format = true
+
+[[language]]
+name = "typescript"
+auto-format = true
+
+[[language]]
+name = "javascript"
+auto-format = true
+
+[[language]]
+name = "bash"
+auto-format = false
+
+[[language]]
+name = "yaml"
+auto-format = true
+
+[[language]]
+name = "json"
+auto-format = true
+
+[[language]]
+name = "toml"
+auto-format = true
+
+[[language]]
+name = "c-sharp"
+auto-format = true
+
+[[language]]
+name = "markdown"
+auto-format = true
+soft-wrap.enable = true
