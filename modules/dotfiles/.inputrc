@@ -14,9 +14,11 @@ set colored-stats on
 set colored-completion-prefix on
 set visible-stats on
 
-# History search with arrow keys
+# History search with arrow keys (normal mode + application mode for tmux)
 "\e[A": history-search-backward
 "\e[B": history-search-forward
+"\eOA": history-search-backward
+"\eOB": history-search-forward
 
 # Ctrl-l clears screen in both modes
 set keymap vi-command

@@ -52,7 +52,7 @@ return {
 
   -- ── Mason: evict Nix-managed servers from ensure_installed ──────
   {
-    "williamboman/mason-lspconfig.nvim",
+    "mason-org/mason-lspconfig.nvim",
     opts = function(_, opts)
       opts.ensure_installed = opts.ensure_installed or {}
       opts.ensure_installed = vim.tbl_filter(function(server)
@@ -73,6 +73,7 @@ return {
         "scala", "sql", "terraform", "toml", "tsx",
         "typescript", "vim", "vimdoc", "xml", "yaml",
         "zig",
+        "c_sharp",
       },
     },
   },

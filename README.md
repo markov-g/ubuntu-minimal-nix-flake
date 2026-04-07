@@ -40,6 +40,7 @@ nix run ~/.config/nix#hm -- switch
 ```
 
 This will:
+
 - Install all Nix-managed packages (~80 CLI tools, editors, etc.)
 - Symlink dotfiles (nvim, helix, tmux, mise, k9s, inputrc, bashrc)
 - Place utility scripts in `~/bin/`

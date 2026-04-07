@@ -44,9 +44,13 @@ return {
     },
     opts = {
       provider = "claude",
-      claude = {
-        model = "claude-sonnet-4-6",
-        max_tokens = 4096,
+      providers = {
+        claude = {
+          model = "claude-sonnet-4-6",
+          extra_request_body = {
+            max_tokens = 4096,
+          },
+        },
       },
       mappings = {
         diff = {

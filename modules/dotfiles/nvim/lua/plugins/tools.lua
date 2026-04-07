@@ -69,6 +69,7 @@ return {
       "nvim-neotest/neotest-python",
       "nvim-neotest/neotest-go",
       "rouge8/neotest-rust",
+      "Issafalcon/neotest-dotnet",
     },
     opts = {
       adapters = {},
