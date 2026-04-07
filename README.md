@@ -125,6 +125,179 @@ modules/
     bin/                     # Utility scripts deployed to ~/bin/
 ```
 
+## Neovim Setup
+
+The Neovim configuration lives in `modules/dotfiles/nvim/` and is symlinked into the Nix store (read-only). It's built on [LazyVim](https://www.lazyvim.org/) with extensive customizations.
+
+### Architecture
+
+```
+nvim/
+  init.lua                          # Entry point: require("config.lazy")
+  lua/
+    config/
+      lazy.lua                      # lazy.nvim bootstrap + LazyVim spec (language extras, editor extras, DAP, etc.)
+      options.lua                   # Editor options (relative numbers, 2-space tabs, treesitter folding, etc.)
+      keymaps.lua                   # Custom keybindings (jk escape, line moves, centered scroll, lazygit, etc.)
+      autocmds.lua                  # Auto-commands (yank highlight, prose wrapping, nix indent, close-with-q)
+    plugins/
+      lsp.lua                       # LSP server config + Mason/Nix dual management + Treesitter parsers
+      tools.lua                     # Editor plugins (catppuccin, oil, harpoon, neotest, lazygit, dadbod, etc.)
+      ai.lua                        # AI plugins (Copilot inline + Avante/Claude chat panel)
+```
+
+Because the config is in the Nix store, `lazy-lock.json` is redirected to `~/.local/share/nvim/lazy-lock.json`.
+
+### LSP: Dual Nix/Mason Management
+
+LSP servers are managed through two paths:
+
+- **Nix-managed** (`mason = false`): Installed via `home.packages` in `home.nix`, already on PATH. Mason is told not to touch these.
+- **Mason-managed**: Everything else. Mason auto-installs these on first open.
+
+Nix-managed servers (defined in `lsp.lua`):
+
+| Server | Language |
+|--------|----------|
+| `nil_ls` | Nix |
+| `gopls` | Go |
+| `rust_analyzer` | Rust |
+| `clangd` | C/C++ |
+| `zls` | Zig |
+| `bashls` | Bash |
+| `lua_ls` | Lua |
+| `ts_ls` | TypeScript/JavaScript |
+| `jsonls` | JSON |
+| `yamlls` | YAML (with GitHub Actions + Docker Compose schemas) |
+
+Mason-managed servers (auto-installed):
+
+| Server | Language | Notes |
+|--------|----------|-------|
+| `omnisharp` | C#/.NET | .NET SDK must be installed via apt (`bootstrap-apt.sh`) |
+| `jdtls` | Java | Via LazyVim java extra |
+| `pyright` | Python | Via LazyVim python extra |
+
+To add a new Nix-managed server: add it to the `nix_managed` list and the `servers` table in `lsp.lua`, then add the corresponding package to `home.packages` in `home.nix`.
+
+### LazyVim Extras
+
+Enabled in `lazy.lua`:
+
+**Language extras:**
+`python`, `go`, `rust`, `typescript`, `java`, `kotlin`, `scala`, `clangd`, `zig`, `json`, `yaml`, `toml`, `markdown`, `sql`, `nix`, `docker`, `terraform`, `helm`, `omnisharp`
+
+**Editor extras:**
+`harpoon2` (fast file switching), `aerial` (code outline), `telescope` (fuzzy finder)
+
+**Coding extras:**
+`yanky` (yank history), `mini-surround` (surround text objects), `luasnip` (snippets)
+
+**Other extras:**
+`dap.core` + `dap.nlua` (debugging), `test.core` (testing framework), `ui.mini-animate` (smooth animations)
+
+### Treesitter Parsers
+
+Explicitly installed parsers (in `lsp.lua`):
+
+```
+bash, c, c_sharp, css, diff, dockerfile, go, gomod, gosum, html, javascript,
+json, lua, luadoc, markdown, markdown_inline, nix, python, query, regex, rust,
+scala, sql, terraform, toml, tsx, typescript, vim, vimdoc, xml, yaml, zig
+```
+
+### Plugin List
+
+Configured in `tools.lua`:
+
+| Plugin | Purpose | Key binding |
+|--------|---------|-------------|
+| **catppuccin/nvim** | Mocha colorscheme (shared with tmux) | — |
+| **vim-tmux-navigator** | Seamless `C-h/j/k/l` navigation between nvim and tmux panes | `C-h/j/k/l` |
+| **lazygit.nvim** | Full Git UI in a floating terminal | `<leader>gg` |
+| **undotree** | Visual undo history tree | `<leader>U` |
+| **oil.nvim** | Filesystem as an editable buffer | `-` |
+| **neotest** | Test runner framework (Go, Rust, Python, .NET adapters) | `<leader>t*` |
+| **vim-dadbod-ui** | Interactive database client | `<leader>D` |
+| **marks.nvim** | Visual mark indicators in sign column | — |
+
+### AI Plugins
+
+Configured in `ai.lua`:
+
+**GitHub Copilot** — inline completions as you type:
+
+| Key | Action |
+|-----|--------|
+| `<Tab>` | Accept full suggestion |
+| `<C-l>` | Accept next word |
+| `<C-j>` | Accept next line |
+| `<M-]>` / `<M-[>` | Cycle through suggestions |
+| `<C-]>` | Dismiss suggestion |
+
+**Avante (Claude)** — chat panel using `claude-sonnet-4-6`:
+
+| Key | Action |
+|-----|--------|
+| `<leader>aa` | Open chat (or ask about visual selection) |
+| `co` / `ct` / `cb` | Accept ours / theirs / both (diff resolution) |
+| `]]` / `[[` | Jump between diff hunks |
+
+Requires `ANTHROPIC_API_KEY` environment variable.
+
+### Custom Keybindings
+
+Defined in `keymaps.lua`:
+
+| Key | Mode | Action |
+|-----|------|--------|
+| `jk` / `kj` | Insert | Escape to normal mode |
+| `J` / `K` | Visual | Move selected lines down/up |
+| `<A-j>` / `<A-k>` | Normal | Move current line down/up |
+| `<C-d>` / `<C-u>` | Normal | Half-page scroll (cursor stays centered) |
+| `n` / `N` | Normal | Next/prev search result (centered) |
+| `<leader>p` | Visual | Paste without overwriting register |
+| `<leader>d` | Normal/Visual | Delete without yanking |
+| `<leader>w` | Normal | Save file |
+| `<leader>gg` | Normal | Open LazyGit (project root) |
+| `<leader>U` | Normal | Toggle undotree |
+| `<leader>D` | Normal | Toggle database UI |
+
+### Auto-commands
+
+Defined in `autocmds.lua`:
+
+- **Yank highlight**: briefly highlights yanked text (200ms)
+- **Resize splits**: auto-equalizes splits when terminal is resized
+- **Close with q**: help, quickfix, man, notify, lspinfo, checkhealth buffers close with `q`
+- **Prose mode**: markdown, gitcommit, and text files get word wrap + spell check
+- **Nix indent**: 2-space indent for `.nix` files
+
+### Editor Options
+
+Defined in `options.lua`:
+
+- Relative line numbers with absolute current line
+- 2-space tabs (expandtab)
+- Smart indent, no word wrap, color column at 120
+- 8-line scroll margin (scrolloff)
+- System clipboard integration (`unnamedplus`)
+- Persistent undo (undofile), no swapfile
+- Case-insensitive search (smart case)
+- New splits open below/right
+- Treesitter-based code folding (all folds open by default)
+
+### Replicating to Another System
+
+To replicate this Neovim setup on a different machine (e.g., macOS via nix-darwin):
+
+1. Copy the entire `modules/dotfiles/nvim/` directory
+2. Ensure the Nix-managed LSP servers are available on PATH (install the corresponding packages)
+3. For Mason-managed servers (omnisharp, jdtls, pyright), Mason will auto-install them on first use — just ensure their runtimes are present (.NET SDK for omnisharp, JDK for jdtls)
+4. For Copilot, run `:Copilot auth` on first use
+5. For Avante, set `ANTHROPIC_API_KEY` in your environment
+6. lazy.nvim will auto-bootstrap on first launch and install all plugins
+
 ## What Goes Where
 
 | Layer | Managed by | Examples |
