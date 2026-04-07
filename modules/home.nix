@@ -220,11 +220,11 @@
   programs.atuin = {
     enable = true;
     enableBashIntegration = true;
+    flags = [ "--disable-up-arrow" ];
     settings = {
       auto_sync      = false;
       update_check   = false;
       style          = "compact";
-      bind_up_arrow  = false;
     };
   };
 
