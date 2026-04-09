@@ -42,9 +42,6 @@
     neovim                # primary editor (LazyVim)
     helix                 # secondary editor — zero-config, fast SSH edits
 
-    ## ── AI tools ───────────────────────────────────────────────────
-    claude-code           # Claude Code CLI (used by claudecode.nvim)
-
     ## ── Shell tools ────────────────────────────────────────────────
     tmux
     atuin                 # shell history
