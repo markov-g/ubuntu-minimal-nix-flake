@@ -71,9 +71,15 @@ return {
       "rouge8/neotest-rust",
       "Issafalcon/neotest-dotnet",
     },
-    opts = {
-      adapters = {},
-    },
+    opts = function(_, opts)
+      opts.adapters = opts.adapters or {}
+      vim.list_extend(opts.adapters, {
+        require("neotest-python"),
+        require("neotest-go"),
+        require("neotest-rust"),
+        require("neotest-dotnet"),
+      })
+    end,
   },
 
   -- ── vim-dadbod (database UI) ─────────────────────────────────────
