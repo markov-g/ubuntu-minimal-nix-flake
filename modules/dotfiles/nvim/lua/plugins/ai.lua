@@ -36,7 +36,7 @@ return {
     dependencies = { "folke/snacks.nvim" },
     config = true,
     opts = {
-      terminal_cmd = "direnv exec /home/devel/git-repos claude",
+      terminal_cmd = "bash -c 'source ~/.claude-env && direnv exec /home/devel/git-repos claude'",
       terminal = {
         split_side = "right",
         split_width_percentage = 0.40,
