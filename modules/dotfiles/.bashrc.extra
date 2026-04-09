@@ -1,0 +1,29 @@
+# ── Nix PATH (needed inside tmux where nix-daemon.sh guard skips) ──
+if ! command -v nix &>/dev/null; then
+  unset __ETC_PROFILE_NIX_SOURCED
+  [ -e '/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh' ] && \
+    . '/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh'
+fi
+
+# ── oh-my-bash ─────────────────────────────────────────────────────
+export OSH="$HOME/.oh-my-bash"
+if [ -f "$OSH/oh-my-bash.sh" ]; then
+  OSH_THEME="font"
+  completions=(git ssh docker nvm pip pip3 system)
+  aliases=(general)
+  plugins=(git bashmarks progress)
+  source "$OSH/oh-my-bash.sh"
+fi
+
+# ── PATH additions ─────────────────────────────────────────────────
+export PATH="$HOME/bin:$HOME/.local/bin:$PATH"
+
+# ── Editor ─────────────────────────────────────────────────────────
+export EDITOR="nvim"
+export VISUAL="nvim"
+
+# ── Tmux auto-start ───────────────────────────────────────────────
+# Attach to existing session or create a new one
+if command -v tmux &>/dev/null && [ -z "$TMUX" ] && [ -n "$PS1" ] && [[ ! "$TERM" =~ screen ]] && [[ ! "$TERM" =~ tmux ]]; then
+  tmux new-session -A -s "${USER}-main" 2>/dev/null
+fi

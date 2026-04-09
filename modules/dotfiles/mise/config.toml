@@ -1,0 +1,18 @@
+## mise (polyglot runtime manager) — global configuration
+## Per-project versions override these via .mise.toml in project roots
+
+[tools]
+# Node.js — LTS
+node = "lts"
+
+# Python — latest stable
+python = "latest"
+
+# Go — latest stable (supplements Nix go for version pinning)
+# go = "latest"
+
+[settings]
+# Use .tool-versions files for compatibility with asdf
+legacy_version_file = true
+# Don't prompt to install missing tools automatically
+auto_install = false
