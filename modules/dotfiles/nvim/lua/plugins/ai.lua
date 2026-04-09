@@ -1,5 +1,5 @@
 -- ╔══════════════════════════════════════════════════════════════════╗
--- ║  AI plugins — Copilot + Avante (Claude)                         ║
+-- ║  AI plugins — Copilot + Claude Code                             ║
 -- ╚══════════════════════════════════════════════════════════════════╝
 
 return {
@@ -30,40 +30,26 @@ return {
     },
   },
 
-  -- ── Avante (Claude chat panel) ──────────────────────────────────
+  -- ── Claude Code (terminal + editor integration) ─────────────────
   {
-    "yetone/avante.nvim",
-    event = "VeryLazy",
-    build = "make",
-    dependencies = {
-      "nvim-treesitter/nvim-treesitter",
-      "stevearc/dressing.nvim",
-      "nvim-lua/plenary.nvim",
-      "MunifTanjim/nui.nvim",
-      "nvim-tree/nvim-web-devicons",
-    },
+    "coder/claudecode.nvim",
+    dependencies = { "folke/snacks.nvim" },
+    config = true,
     opts = {
-      provider = "claude",
-      providers = {
-        claude = {
-          model = "claude-sonnet-4-6",
-          extra_request_body = {
-            max_tokens = 4096,
-          },
-        },
+      terminal = {
+        split_side = "right",
+        split_width_percentage = 0.40,
       },
-      mappings = {
-        diff = {
-          ours    = "co",
-          theirs  = "ct",
-          both    = "cb",
-          cursor  = "cc",
-        },
-        jump = {
-          next = "]]",
-          prev = "[[",
-        },
-      },
+    },
+    keys = {
+      { "<leader>ac", "<cmd>ClaudeCode<cr>",             desc = "Toggle Claude Code" },
+      { "<leader>af", "<cmd>ClaudeCodeFocus<cr>",         desc = "Focus Claude Code" },
+      { "<leader>ar", "<cmd>ClaudeCode --resume<cr>",     desc = "Resume Claude" },
+      { "<leader>aC", "<cmd>ClaudeCode --continue<cr>",   desc = "Continue Claude" },
+      { "<leader>ab", "<cmd>ClaudeCodeAdd %<cr>",         desc = "Add buffer to Claude" },
+      { "<leader>as", "<cmd>ClaudeCodeSend<cr>", mode = "v", desc = "Send selection to Claude" },
+      { "<leader>aa", "<cmd>ClaudeCodeDiffAccept<cr>",    desc = "Accept Claude diff" },
+      { "<leader>ad", "<cmd>ClaudeCodeDiffDeny<cr>",      desc = "Reject Claude diff" },
     },
   },
 }
