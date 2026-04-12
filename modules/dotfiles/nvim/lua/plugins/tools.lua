@@ -3,6 +3,30 @@
 -- ╚══════════════════════════════════════════════════════════════════╝
 
 return {
+  -- ── mini.animate: tuned way down for performance ────────────────
+  -- Keeps the plugin loaded (so fade transitions still happen) but
+  -- disables the cursor/scroll/resize animations that caused lag.
+  {
+    "nvim-mini/mini.animate",
+    event = "VeryLazy",
+    opts = function(_, opts)
+      opts = opts or {}
+      local animate = require("mini.animate")
+      -- Disable the expensive per-step animations
+      opts.cursor = { enable = false }
+      opts.scroll = { enable = false }
+      opts.resize = { enable = false }
+      -- Keep window open/close fade — it's cheap and looks nice
+      opts.open = {
+        timing = animate.gen_timing.linear({ duration = 80, unit = "total" }),
+      }
+      opts.close = {
+        timing = animate.gen_timing.linear({ duration = 80, unit = "total" }),
+      }
+      return opts
+    end,
+  },
+
   -- ── Catppuccin colorscheme ──────────────────────────────────────
   {
     "catppuccin/nvim",
@@ -100,5 +124,29 @@ return {
     "chentoast/marks.nvim",
     event = "VeryLazy",
     opts = {},
+  },
+
+  -- ── nvim-ufo: async treesitter folding (fast, no input lag) ─────
+  {
+    "kevinhwang91/nvim-ufo",
+    dependencies = { "kevinhwang91/promise-async" },
+    event = "BufReadPost",
+    opts = {
+      provider_selector = function(_, ft, _)
+        -- Prefer treesitter, fall back to indent-based folds
+        return { "treesitter", "indent" }
+      end,
+    },
+    init = function()
+      -- ufo needs these set BEFORE it loads
+      vim.o.foldcolumn     = "1"
+      vim.o.foldlevel      = 99
+      vim.o.foldlevelstart = 99
+      vim.o.foldenable     = true
+    end,
+    keys = {
+      { "zR", function() require("ufo").openAllFolds() end,  desc = "Open all folds" },
+      { "zM", function() require("ufo").closeAllFolds() end, desc = "Close all folds" },
+    },
   },
 }

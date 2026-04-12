@@ -29,8 +29,9 @@ opt.splitright     = true
 opt.termguicolors  = true
 opt.cursorline     = true
 
--- Treesitter-based folding
-opt.foldmethod     = "expr"
-opt.foldexpr       = "v:lua.vim.treesitter.foldexpr()"
+-- Folding: treesitter-based via nvim-ufo (async, fast).
+-- ufo sets foldmethod/foldexpr itself; we just set the limits.
+opt.foldcolumn     = "1"
 opt.foldlevel      = 99
 opt.foldlevelstart = 99
+opt.foldenable     = true
