@@ -23,7 +23,6 @@ local nix_managed = {
 -- we don't want (either unused or fail to install cleanly).
 local skip_mason = {
   "fsautocomplete",   -- F# LSP — not used
-  "omnisharp",        -- legacy C# LSP — we'll rely on roslyn_ls instead
 }
 
 return {
@@ -54,9 +53,8 @@ return {
           },
         },
 
-        -- Disable .NET servers we can't / don't want to auto-install
+        -- Disable F# LSP (not used)
         fsautocomplete = { enabled = false },
-        omnisharp      = { enabled = false },
       },
     },
   },
