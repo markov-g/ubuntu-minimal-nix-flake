@@ -120,9 +120,9 @@
     initExtra = builtins.readFile ./dotfiles/.bashrc.extra + ''
 
       # ── Linuxbrew shellenv ─────────────────────────────────────────
-      if [ -d "$HOME/.linuxbrew" ]; then
+      if [ -x "$HOME/.linuxbrew/bin/brew" ]; then
         eval "$($HOME/.linuxbrew/bin/brew shellenv)"
-      elif [ -d "/home/linuxbrew/.linuxbrew" ]; then
+      elif [ -x "/home/linuxbrew/.linuxbrew/bin/brew" ]; then
         eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
       fi
     '';
