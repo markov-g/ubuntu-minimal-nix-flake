@@ -351,10 +351,11 @@
     #      NOTE: uses system sudo (not pkgs.sudo, which is not setuid).
     #   3. Otherwise fall back to a per-user install at $HOME/.linuxbrew
     #      (no sudo, works everywhere, but builds from source).
+    # Install Linuxbrew on first run
     installLinuxbrew = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       if [ -x "/home/linuxbrew/.linuxbrew/bin/brew" ] || [ -x "$HOME/.linuxbrew/bin/brew" ]; then
         echo "✱ Linuxbrew already installed — skipping"
-      elif command -v sudo >/dev/null 2>&1 && sudo -n true 2>/dev/null; then
+      elif [ -x /usr/bin/sudo ] && /usr/bin/sudo -n true 2>/dev/null; then
         echo "✱ Installing Linuxbrew to /home/linuxbrew/.linuxbrew (passwordless sudo detected)"
         NONINTERACTIVE=1 ${pkgs.bash}/bin/bash -c \
           "$(${pkgs.curl}/bin/curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" \
@@ -362,8 +363,9 @@
       else
         echo "✱ Installing Linuxbrew to \$HOME/.linuxbrew (no sudo — unsupported mode, builds from source)"
         mkdir -p "$HOME/.linuxbrew"
-        ${pkgs.curl}/bin/curl -L https://github.com/Homebrew/brew/tarball/master \
+        ${pkgs.curl}/bin/curl -fsSL https://github.com/Homebrew/brew/tarball/master \
           | ${pkgs.gnutar}/bin/tar xz --strip-components=1 -C "$HOME/.linuxbrew" \
+              --use-compress-program=${pkgs.gzip}/bin/gzip \
           || { echo "⚠ Linuxbrew fetch failed"; exit 0; }
         echo "  Run: eval \"\$($HOME/.linuxbrew/bin/brew shellenv)\" && brew update --force --quiet"
       fi
