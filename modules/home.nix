@@ -357,6 +357,7 @@
         echo "✱ Linuxbrew already installed — skipping"
       elif [ -x /usr/bin/sudo ] && /usr/bin/sudo -n true 2>/dev/null; then
         echo "✱ Installing Linuxbrew to /home/linuxbrew/.linuxbrew (passwordless sudo detected)"
+        export PATH="/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
         NONINTERACTIVE=1 ${pkgs.bash}/bin/bash -c \
           "$(${pkgs.curl}/bin/curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" \
           || echo "⚠ Linuxbrew install failed; retry manually"
