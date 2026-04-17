@@ -341,5 +341,32 @@
         mise trust --all 2>/dev/null || true
       fi
     '';
+
+    # Install Linuxbrew on first run
+    #
+    # Strategy:
+    #   1. If brew is already present in either prefix, skip (idempotent).
+    #   2. Prefer the standard shared prefix /home/linuxbrew/.linuxbrew
+    #      IF the system's sudo has passwordless access (CI/headless friendly).
+    #      NOTE: uses system sudo (not pkgs.sudo, which is not setuid).
+    #   3. Otherwise fall back to a per-user install at $HOME/.linuxbrew
+    #      (no sudo, works everywhere, but builds from source).
+    installLinuxbrew = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      if [ -x "/home/linuxbrew/.linuxbrew/bin/brew" ] || [ -x "$HOME/.linuxbrew/bin/brew" ]; then
+        echo "✱ Linuxbrew already installed — skipping"
+      elif command -v sudo >/dev/null 2>&1 && sudo -n true 2>/dev/null; then
+        echo "✱ Installing Linuxbrew to /home/linuxbrew/.linuxbrew (passwordless sudo detected)"
+        NONINTERACTIVE=1 ${pkgs.bash}/bin/bash -c \
+          "$(${pkgs.curl}/bin/curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" \
+          || echo "⚠ Linuxbrew install failed; retry manually"
+      else
+        echo "✱ Installing Linuxbrew to \$HOME/.linuxbrew (no sudo — unsupported mode, builds from source)"
+        mkdir -p "$HOME/.linuxbrew"
+        ${pkgs.curl}/bin/curl -L https://github.com/Homebrew/brew/tarball/master \
+          | ${pkgs.gnutar}/bin/tar xz --strip-components=1 -C "$HOME/.linuxbrew" \
+          || { echo "⚠ Linuxbrew fetch failed"; exit 0; }
+        echo "  Run: eval \"\$($HOME/.linuxbrew/bin/brew shellenv)\" && brew update --force --quiet"
+      fi
+    '';
   };
 }
