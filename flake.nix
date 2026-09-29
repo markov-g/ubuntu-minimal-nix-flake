@@ -17,12 +17,22 @@
     };
 
     determinate.url = "https://flakehub.com/f/DeterminateSystems/determinate/0.1";
+
+    rust-overlay = {
+      url = "github:oxalica/rust-overlay";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    spacemacs = {
+      url = "github:syl20bnr/spacemacs/develop";
+      flake = false;
+    };
   };
 
   ####################################################################
   # Outputs
   ####################################################################
-  outputs = { self, nixpkgs, home-manager, determinate }:
+  outputs = { self, nixpkgs, home-manager, determinate, rust-overlay, spacemacs }:
   let
     system = "aarch64-linux";
     pkgs   = import nixpkgs {
@@ -31,13 +41,27 @@
     };
 
     # Helper: build a Home-Manager configuration for a given user/host
-    mkHomeUser = { user, host ? "default" }:
+    mkHomeUser = {
+      user,
+      host ? "default",
+      modules ? [ ./modules/home.nix ],
+      overlays ? [ ],
+      specialArgs ? { },
+    }:
+      let
+        userPkgs =
+          if builtins.length overlays == 0 then
+            pkgs
+          else
+            import nixpkgs {
+              inherit system overlays;
+              config.allowUnfree = true;
+            };
+      in
       home-manager.lib.homeManagerConfiguration {
-        inherit pkgs;
-        extraSpecialArgs = { inherit user host; };
-        modules = [
-          ./modules/home.nix
-        ];
+        pkgs = userPkgs;
+        extraSpecialArgs = { inherit user host; } // specialArgs;
+        inherit modules;
       };
   in
   {
@@ -54,6 +78,17 @@
       "devel" = mkHomeUser {
         user = "devel";
         host = "default";
+      };
+
+      "devel@omarchydevbox" = mkHomeUser {
+        user = "devel";
+        host = "omarchydevbox";
+        modules = [
+          ./modules/omarchy-dev.nix
+          ./modules/omarchy-spacemacs.nix
+        ];
+        overlays = [ rust-overlay.overlays.default ];
+        specialArgs = { inherit spacemacs; };
       };
     };
 
