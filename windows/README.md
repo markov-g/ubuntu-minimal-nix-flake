@@ -13,7 +13,38 @@ control for convenience only.
 
 ### 1. On Windows: `bootstrap-windows.ps1`
 
-Run from a normal (non-elevated) PowerShell window:
+If you downloaded this file via a browser (e.g. from `Downloads`),
+Windows marks it with a "mark of the web" and the default execution
+policy (`Restricted`) refuses to run any unsigned script at all. You'll
+likely hit one or both of:
+
+```
+File ... cannot be loaded. The file ... is not digitally signed.
+You cannot run this script on the current system.
+```
+
+Either run it once with an explicit bypass (nothing changed
+permanently):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\bootstrap-windows.ps1
+```
+
+Or fix it for your user going forward (two independent causes, so both
+steps matter):
+
+```powershell
+Unblock-File .\bootstrap-windows.ps1
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+```
+
+`Unblock-File` removes the mark-of-the-web flag Windows stamps on
+anything downloaded via browser. `RemoteSigned` (Microsoft's documented
+middle-ground policy) then allows locally-authored/unblocked scripts to
+run while still requiring a signature for scripts that remain flagged
+as downloaded.
+
+Once past that, run from a normal (non-elevated) PowerShell window:
 
 ```powershell
 .\bootstrap-windows.ps1
@@ -50,23 +81,42 @@ What it does, in order:
    virtualization (Intel VT-x / AMD-V) appears enabled in firmware.
    Windows cannot enable this for you -- if WSL2 later fails to start
    a VM, enable virtualization in your BIOS/UEFI setup yourself.
-3. Installs the `Debian` WSL distro via `wsl --install -d Debian`, if
-   a distro named `Debian` isn't already registered (checked via
-   `wsl --list --quiet`). An existing `Debian` distro is never
-   reinstalled, reset, or unregistered.
+3. Installs the `Debian` WSL distro via `wsl --install -d Debian
+   --no-launch`, if a distro named `Debian` isn't already registered
+   (checked via `wsl --list --quiet`). An existing `Debian` distro is
+   never reinstalled, reset, or unregistered.
+   - **`--no-launch` is deliberate, not an oversight.** Without it,
+     `wsl --install -d <name>` auto-launches the new distro into an
+     interactive bash shell the moment the first-run UNIX
+     username/password prompts are answered -- using this same
+     console. The script would then hang indefinitely, since `wsl.exe`
+     does not return control until the user manually types `exit`
+     from that shell (confirmed by hitting exactly this on a real
+     run). `--no-launch` registers and provisions Debian without that
+     handoff, so the script can continue on to Chocolatey/Scoop
+     immediately.
+   - This means Debian is installed but **not yet initialized** after
+     this script finishes -- you still need to open it once yourself
+     (see step 1 below) to create your UNIX username and password.
 4. Installs Chocolatey, if not already present.
 5. Installs `microsoft-windows-terminal` and `podman-desktop` via
    Chocolatey, if not already installed.
 6. Installs Scoop, if not already present (run in the non-elevated
    user context).
 
-After this script finishes, launch **Podman Desktop** once and follow
-its first-run onboarding to create and start its WSL2 machine -- that
-GUI step isn't automated here.
+After this script finishes:
+
+1. Open **Debian** once from the Start menu (or run `wsl -d Debian`)
+   to complete its first-run setup -- you'll be prompted to create a
+   UNIX username and password.
+2. Launch **Podman Desktop** once and follow its first-run onboarding
+   to create and start its WSL2 machine -- that GUI step isn't
+   automated here either.
 
 ### 2. Inside the new Debian WSL distro: `setup-wsl-nix.sh`
 
-Open the new `Debian` distro (Start menu, or `wsl -d Debian`), then:
+After completing Debian's first-run username/password setup (see
+above), open it again (Start menu, or `wsl -d Debian`), then:
 
 ```bash
 bash setup-wsl-nix.sh

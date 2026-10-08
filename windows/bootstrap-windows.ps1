@@ -296,11 +296,28 @@ function Invoke-AdminPhase {
     Write-Ok "WSL distro 'Debian' is already registered."
   }
   else {
-    Write-Install "Installing WSL distro 'Debian' (this may open its own window for first-run user setup)..."
-    & wsl.exe --install -d Debian
+    # --no-launch is required here: by default `wsl --install -d <name>`
+    # auto-launches the new distro once the download finishes, showing
+    # the first-run UNIX username/password prompts (as expected), but
+    # then drops straight into an interactive bash shell inside that
+    # distro using THIS SAME console. wsl.exe does not exit/return
+    # control to this script until the user manually types `exit` from
+    # that shell -- confirmed by observing this exact script hang at
+    # that point on a real run. --no-launch registers and provisions
+    # the distro without ever handing the console over that way; the
+    # user completes the username/password setup themselves afterward,
+    # on their own schedule, by opening the distro normally.
+    Write-Install "Installing WSL distro 'Debian' (registering only; not launching it)..."
+    & wsl.exe --install -d Debian --no-launch
     if ($LASTEXITCODE -ne 0) {
       Write-Fail "wsl --install -d Debian exited with code $LASTEXITCODE"
       $result.Failed = $true
+    }
+    else {
+      Write-Host ""
+      Write-WarnMsg "Debian is installed but not yet initialized. Open it once from the"
+      Write-WarnMsg "Start menu (or run 'wsl -d Debian') to complete first-run setup --"
+      Write-WarnMsg "you'll be prompted to create a UNIX username and password."
     }
   }
 
@@ -312,9 +329,28 @@ function Invoke-AdminPhase {
   }
   else {
     Write-Install "Installing Chocolatey..."
-    Set-ExecutionPolicy Bypass -Scope Process -Force
+    # On machines where a Group Policy-enforced execution policy exists
+    # at a broader scope (e.g. LocalMachine via GPO), this per-process
+    # override is harmlessly rejected -- PowerShell still prints a
+    # non-terminating warning by default even though it does not stop
+    # the script. Silence that specific, expected noise with
+    # -ErrorAction SilentlyContinue rather than letting it look like a
+    # failure; the Chocolatey install below works fine either way as
+    # long as the broader, GPO-enforced policy already permits it.
+    Set-ExecutionPolicy Bypass -Scope Process -Force -ErrorAction SilentlyContinue
     [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
-    Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+
+    # Run Chocolatey's official installer in its own child scope (the
+    # `& { ... }` wrapper), NOT inline in this function's scope.
+    # Confirmed by reading install.ps1 directly: it declares its own
+    # top-level `$result` variable. Invoke-Expression executes in
+    # whatever scope calls it, so without this isolation Chocolatey's
+    # $result silently overwrote this function's own $result (the
+    # PSCustomObject tracking RebootRequired/Failed) -- observed for
+    # real, causing "$result.Failed cannot be found" right after this
+    # ran. The child scope contains Chocolatey's variables and lets
+    # them go out of scope harmlessly when the scriptblock returns.
+    & { Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1')) }
 
     # Make choco available in this same session without a new shell.
     $chocoBin = Join-Path $env:ProgramData 'chocolatey\bin'
@@ -339,9 +375,19 @@ function Invoke-AdminPhase {
     else {
       Write-Install "Installing $($pkg.Name) ($($pkg.Id)) via Chocolatey..."
       & choco install $pkg.Id -y
-      if ($LASTEXITCODE -ne 0) {
+      # Chocolatey's own docs define valid package exit codes as
+      # 0, 1605, 1614, 1641, 3010 -- all success, not just 0. 3010
+      # specifically means "success, reboot required". Observed for
+      # real: Windows Terminal returned 3010 and was incorrectly
+      # flagged [FAIL] before this fix even though it installed fine.
+      $chocoSuccessCodes = @(0, 1605, 1614, 1641, 3010)
+      if ($LASTEXITCODE -notin $chocoSuccessCodes) {
         Write-Fail "choco install $($pkg.Id) exited with code $LASTEXITCODE"
         $result.Failed = $true
+      }
+      elseif ($LASTEXITCODE -eq 3010) {
+        Write-Ok "$($pkg.Name) installed (exit code 3010: success, reboot required)."
+        $result.RebootRequired = $true
       }
     }
   }
@@ -392,10 +438,38 @@ function Invoke-UserPhase {
 #
 # This is the elevated child process spawned below, doing only the
 # mutating work. Never invoked directly by a user.
+#
+# It runs in its own console window (a side effect of -Verb RunAs
+# elevation) that closes the instant the script exits, so Write-Host
+# output would otherwise be unreviewable if something failed. Start-
+# Process's -RedirectStandardOutput/-RedirectStandardError cannot be
+# combined with -Verb RunAs (they are mutually exclusive parameter
+# sets -- RunAs requires ShellExecute, which cannot redirect standard
+# streams). Start-Transcript has no such restriction and does capture
+# Write-Host (it records everything that appears on the console), so
+# it is used here instead.
 if ($AdminPhaseOnly) {
+  $logPath = Join-Path $env:TEMP 'bootstrap-windows-admin-phase.log'
+  try {
+    Start-Transcript -Path $logPath -Append -ErrorAction Stop | Out-Null
+  }
+  catch {
+    Write-WarnMsg "Could not start transcript logging to '$logPath': $($_.Exception.Message)"
+  }
+
   $adminResult = Invoke-AdminPhase
-  if ($adminResult.RebootRequired) { exit 2 }
+
+  Write-Host ""
+  Write-Host "Full admin-phase log: $logPath"
+  try { Stop-Transcript -ErrorAction Stop | Out-Null } catch { }
+
+  # Failed must be checked BEFORE RebootRequired. Since a Chocolatey
+  # package can return exit code 3010 ("success, reboot required") for
+  # an earlier package while a LATER package in the same loop genuinely
+  # fails, both flags can end up true together. Exiting 2 first would
+  # silently swallow a real failure behind a "just reboot" message.
   if ($adminResult.Failed) { exit 1 }
+  if ($adminResult.RebootRequired) { exit 2 }
   exit 0
 }
 
@@ -417,17 +491,26 @@ if (-not $adminWorkPending) {
   exit 0
 }
 
+# Same path the admin phase writes its transcript to (see the
+# $AdminPhaseOnly branch above); surfaced here too so a failure or
+# reboot message always tells the user where to find the full log,
+# regardless of which branch below produced it.
+$adminPhaseLogPath = Join-Path $env:TEMP 'bootstrap-windows-admin-phase.log'
+
 if (Test-IsAdmin) {
   # Already elevated (e.g. launched via "Run as administrator"): no
   # need to spawn a child, just do the mutating work directly.
   Write-Host ""
   Write-WarnMsg "Pending admin-level work found, and this session is already elevated; proceeding directly."
   $adminResult = Invoke-AdminPhase
-  if ($adminResult.RebootRequired) { exit 2 }
+  # Failed checked before RebootRequired -- see comment at the
+  # $AdminPhaseOnly branch above for why a reboot-required package can
+  # coexist with a genuine failure from a different package.
   if ($adminResult.Failed) {
     Write-Fail "Admin phase reported failures; skipping Scoop phase."
     exit 1
   }
+  if ($adminResult.RebootRequired) { exit 2 }
   Complete-Run
   exit 0
 }
@@ -435,6 +518,7 @@ if (Test-IsAdmin) {
 Write-Host ""
 Write-Host "Pending admin-level work found. Requesting elevation (UAC prompt)..." -ForegroundColor Cyan
 Write-Host "Any administrator account's credentials can be used here -- you do not need to be logged in as an admin yourself."
+Write-Host "The elevated window's output is also logged to: $adminPhaseLogPath"
 
 try {
   $proc = Start-Process -FilePath 'powershell.exe' `
@@ -458,7 +542,8 @@ switch ($proc.ExitCode) {
     exit 0
   }
   default {
-    Write-Fail "Admin phase failed (exit code $($proc.ExitCode)). See the elevated window output above."
+    Write-Fail "Admin phase failed (exit code $($proc.ExitCode))."
+    Write-Fail "The elevated window has already closed. Full output was logged to: $adminPhaseLogPath"
     exit 1
   }
 }
